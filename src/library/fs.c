@@ -167,9 +167,10 @@ bool fs_mount(FileSystem *fs, Disk *disk) {
         
         Inode *inodes = inode_block.inodes;
 
-        for (int i = 1; i <= INODES_PER_BLOCK; i ++ )
+        for (int i = 0; i < INODES_PER_BLOCK; i ++ )
             if (inodes[i].valid == 1)
-            {    for (size_t j = 0; j < POINTERS_PER_INODE; j ++ )
+            {    
+                for (size_t j = 0; j < POINTERS_PER_INODE; j ++ )
                     if (inodes[i].direct[j] != 0){
                         fs->free_blocks[inodes[i].direct[j]] = false;
                     }
@@ -179,12 +180,11 @@ bool fs_mount(FileSystem *fs, Disk *disk) {
                     fs->free_blocks[inodes[i].indirect] = false;
                     
                     Block indirect_block;
-                    if (disk_read(fs->disk, inodes[i].indirect,indirect_block.data) == DISK_FAILURE)
+                    if (disk_read(fs->disk, inodes[i].indirect, indirect_block.data) == DISK_FAILURE)
                         return false;
                     
                     for (size_t j = 0; j < POINTERS_PER_BLOCK; j++){
-                        size_t pointer = 0;
-                        memcpy(&pointer, indirect_block.data + j * sizeof(uint32_t), sizeof(uint32_t));
+                        size_t pointer = indirect_block.pointers[j];
 
                         if (pointer != 0){
                             fs->free_blocks[pointer] = false;
@@ -259,7 +259,7 @@ ssize_t fs_create(FileSystem *fs) {
             return -1;
 
            
-        size_t index_within_block  = block_number % INODES_PER_BLOCK;
+        size_t index_within_block  = inode_number % INODES_PER_BLOCK;
 
   
 
@@ -428,9 +428,6 @@ ssize_t fs_read(FileSystem *fs, size_t inode_number, char *data, size_t length, 
 
     ssize_t bytes_read = 0; 
     size_t current_offset = offset;
-
-    if (offset >= inode->size)
-        return 0;
     
     while (current_offset < inode->size && bytes_read < length){
         char buf[BLOCK_SIZE];

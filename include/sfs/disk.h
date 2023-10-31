@@ -1,4 +1,4 @@
-/* disk.h: SimpleFS 磁盘模拟器 */
+/* disk.h: 磁盘模拟器 */
 
 #ifndef DISK_H
 #define DISK_H
