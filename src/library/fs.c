@@ -423,7 +423,7 @@ ssize_t fs_read(FileSystem *fs, size_t inode_number, char *data, size_t length, 
     size_t index_within_block  = inode_number % INODES_PER_BLOCK;
 
     Inode *inodes  = inode_block.inodes;
-    Inode *inode = &inodes[INODES_PER_BLOCK];
+    Inode *inode = &inodes[index_within_block];
     if (inode->valid == 0) return -1;
 
     ssize_t bytes_read = 0; 
@@ -534,7 +534,7 @@ ssize_t fs_write(FileSystem *fs, size_t inode_number, char *data, size_t length,
     size_t index_within_block  = inode_number % INODES_PER_BLOCK;
 
     Inode *inodes  = inode_block.inodes;
-    Inode *inode = &inodes[INODES_PER_BLOCK];
+    Inode *inode = &inodes[index_within_block];
     if (inode->valid == 0) return -1;
 
 
