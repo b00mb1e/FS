@@ -43,7 +43,7 @@ void fs_debug(Disk *disk) {
 
         for (size_t i = 0; i < INODES_PER_BLOCK; i++){
             if (inodes[i].valid == 1){
-                printf("Inode %d:\n", i + (block_number - 1) * INODES_PER_BLOCK);
+                printf("Inode %ld:\n", i + (block_number - 1) * INODES_PER_BLOCK);
                 printf("    File size: %u bytes\n", inodes[i].size);
                 printf("    Direct pointers: ");
                 for (size_t j = 0; j < POINTERS_PER_INODE; j++){
@@ -503,7 +503,7 @@ ssize_t fs_read(FileSystem *fs, size_t inode_number, char *data, size_t length, 
 /**
  * 向指定的inode写入数据，从指定的偏移开始精确地写入长度字节，执行以下操作：
  *
- *  1. 加载i节点信息。
+ *  1. 加载inode信息。
  *
  *  2. 连续从缓冲区复制数据到块。
  *
@@ -543,7 +543,7 @@ ssize_t fs_write(FileSystem *fs, size_t inode_number, char *data, size_t length,
 
      
     size_t current_offset = offset;
-    size_t current_block = current_offset / BLOCK_SIZE;
+    size_t current_block = (current_offset + BLOCK_SIZE - 1) / BLOCK_SIZE;
     size_t bytes_written = 0;
 
     while (current_block < end_block&& bytes_written < length){
@@ -551,7 +551,7 @@ ssize_t fs_write(FileSystem *fs, size_t inode_number, char *data, size_t length,
         char buf[BLOCK_SIZE];
         size_t block_index = current_block;
 
-        if (block_index < POINTERS_PER_BLOCK){
+        if (block_index < POINTERS_PER_INODE){
             
             if (inode->direct[block_index] == 0){
                 size_t pointer = 0;
@@ -658,7 +658,9 @@ ssize_t fs_write(FileSystem *fs, size_t inode_number, char *data, size_t length,
     if (end_offset > inode->size) {
         inode->size = end_offset;
     }
-    
+    if (disk_write(fs->disk, block_number, inode_block.data) == DISK_FAILURE)
+        return -1;
+
     return bytes_written;
 }
 
